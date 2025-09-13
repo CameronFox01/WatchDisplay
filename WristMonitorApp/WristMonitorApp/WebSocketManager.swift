@@ -8,48 +8,43 @@
 import Foundation
 
 class WebSocketManager: ObservableObject {
-    private var webSocketTask: URLSessionWebSocketTask?
-    
-    @Published var latestData: [String: Any] = [:]
-    
+    private var task: URLSessionWebSocketTask?
+    @Published var latestData: ComputerData?
+
     func connect() {
-        let url = URL(string: "ws://10.0.0.105:8765")!
-        webSocketTask = URLSession.shared.webSocketTask(with: url)
-        webSocketTask?.resume()
+        let url = URL(string: "ws://10.0.0.105:8765")! // change later if testing on iPhone
+        task = URLSession(configuration: .default).webSocketTask(with: url)
+        task?.resume()
         receive()
     }
-    
-    func receive() {
-        webSocketTask?.receive { [weak self] result in
+
+    func disconnect() {
+        task?.cancel(with: .goingAway, reason: nil)
+    }
+
+    private func receive() {
+        task?.receive { [weak self] result in
             switch result {
+            case .failure(let error):
+                print("Error receiving: \(error)")
             case .success(let message):
                 switch message {
                 case .string(let text):
                     if let data = text.data(using: .utf8) {
                         do {
-                            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                                DispatchQueue.main.async {
-                                    self?.latestData = json
-                                    print("Received: \(json)")
-                                }
+                            let decoded = try JSONDecoder().decode(ComputerData.self, from: data)
+                            DispatchQueue.main.async {
+                                self?.latestData = decoded
                             }
                         } catch {
-                            print("JSON parse error: \(error)")
+                            print("Decoding error: \(error)")
                         }
                     }
                 default:
                     break
                 }
-            case .failure(let error):
-                print("WebSocket error: \(error)")
             }
-            
-            // Continue listening
             self?.receive()
         }
-    }
-    
-    func disconnect() {
-        webSocketTask?.cancel(with: .goingAway, reason: nil)
     }
 }

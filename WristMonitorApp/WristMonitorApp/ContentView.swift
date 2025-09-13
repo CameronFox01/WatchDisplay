@@ -13,58 +13,62 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             List {
-                if let cpu = wsManager.latestData["cpu_usage"] {
+                if let data = wsManager.latestData {
                     HStack {
                         Text("CPU Usage")
                         Spacer()
-                        Text("\(cpu)%")
+                        Text("\(data.cpu_usage, specifier: "%.2f")%")
                     }
-                }
-                if let memory = wsManager.latestData["memory_usage"] {
                     HStack {
                         Text("Memory Usage")
                         Spacer()
-                        Text("\(memory)%")
+                        Text("\(data.memory_usage, specifier: "%.2f")%")
                     }
-                }
-                if let disk = wsManager.latestData["disk_usage"] {
-                    HStack {
-                        Text("Disk Usage")
-                        Spacer()
-                        Text("\(disk)%")
+                    if let cDrive = data.c_drive {
+                        HStack {
+                            Text("C Drive Usage")
+                            Spacer()
+                            Text("\(cDrive, specifier: "%.2f")%")
+                        }
                     }
-                }
-                if let network = wsManager.latestData["network_io"] as? [String: Any] {
+                    if let dDrive = data.d_drive {
+                        HStack {
+                            Text("D Drive Usage")
+                            Spacer()
+                            Text("\(dDrive, specifier: "%.2f")%")
+                        }
+                    }
                     HStack {
                         Text("Network Sent")
                         Spacer()
-                        Text("\(network["bytes_sent"] ?? 0)")
+                        Text("\(data.network_io.bytes_sent)")
                     }
                     HStack {
                         Text("Network Received")
                         Spacer()
-                        Text("\(network["bytes_recv"] ?? 0)")
+                        Text("\(data.network_io.bytes_recv)")
                     }
-                }
-                if let battery = wsManager.latestData["battery_status"] as? [String: Any],
-                   let percent = battery["percent"] {
-                    HStack {
-                        Text("Battery")
-                        Spacer()
-                        Text("\(percent)%")
+                    if let battery = data.battery_status {
+                        HStack {
+                            Text("Battery")
+                            Spacer()
+                            Text("\(battery.percent)%")
+                        }
+                        HStack {
+                            Text("Plugged in")
+                            Spacer()
+                            Text(battery.power_plugged ? "Yes" : "No")
+                        }
                     }
                 }
             }
             .navigationTitle("PC Metrics")
         }
-        .onAppear {
-            wsManager.connect()
-        }
-        .onDisappear {
-            wsManager.disconnect()
-        }
+        .onAppear { wsManager.connect() }
+        .onDisappear { wsManager.disconnect() }
     }
 }
+
 #Preview {
     ContentView()
 }
