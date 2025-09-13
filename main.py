@@ -5,8 +5,6 @@
 import psutil
 import json
 
-
-
 def get_computer_data():
     computer_data = {
         "cpu_usage": psutil.cpu_percent(interval=1),
