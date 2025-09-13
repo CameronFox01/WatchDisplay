@@ -4,7 +4,7 @@ import asyncio
 import websockets
 
 async def test():
-    uri = "ws://localhost:8765"
+    uri = "ws://10.0.0.105:8765"
     async with websockets.connect(uri) as websocket:
         for _ in range(3):  # read 3 messages
             message = await websocket.recv()
